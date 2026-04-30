@@ -62,7 +62,6 @@ end
 if USE_MPI
     #Only run MPI tests
     tests = [
-        #("MPI", "mpi.jl"),
         ("MPI_test", "mpi_test.jl"),
     ]
 end
@@ -82,6 +81,10 @@ if PROGRAM_FILE != "" && realpath(PROGRAM_FILE) == @__FILE__
         Pkg.develop(path=joinpath(@__DIR__, ".."))
         Pkg.instantiate()
     catch
+    end
+
+    if USE_MPI
+        include("setup_mpi.jl")
     end
 
     using ArgParse
@@ -182,6 +185,14 @@ if additional_workers > 0
     # We put this inside a branch because addprocs() takes a minimum of 1s to
     # complete even if doing nothing, which is annoying.
     addprocs(additional_workers; exeflags="--project=$(joinpath(@__DIR__, ".."))")
+    @everywhere begin
+        using Pkg
+        Pkg.instantiate()
+    end
+end
+
+if USE_MPI
+    @everywhere using MPI
 end
 
 include("imports.jl")
@@ -201,11 +212,9 @@ if USE_GPU
 end
 
 if USE_MPI
-    include("setup_mpi.jl")
     @info "Running MPI tests via mpiexecjl"
-    # Construct path to mpiexecjl in the depot's bin directory
-    # I've tried to figure out another way to launch the mpi jobs but that was the only one I got today
-    cmd = `mpiexecjl -n 2 $(Base.julia_cmd()) --project=$(Base.active_project()) $(joinpath(@__DIR__, "mpi_test.jl"))`
+    mpiexecjl_path = joinpath(DEPOT_PATH[1], "bin", "mpiexecjl")
+    cmd = `$mpiexecjl_path -n 2 $(Base.julia_cmd()) --project=$(Base.active_project()) $(joinpath(@__DIR__, "mpi_test.jl"))`
     @info "Executing: $cmd"
     run(cmd)
     exit(0)
