@@ -33,10 +33,19 @@ jobs:
 
       - uses: julia-actions/julia-buildpkg@v1
 
+      - name: Configure MPI
+        # MPIPreferences requires a Julia restart to pick up binary changes.
+        # We configure it here in a separate step so that the main test process
+        # starts with the correct library already selected.
+        run: julia --project=test -e 'using Pkg; Pkg.instantiate(); using MPIPreferences; MPIPreferences.use_jll_binary("MPICH_jll"; export_prefs=true)'
+        if: env.CI_USE_MPI == '1'
+        env:
+          CI_USE_MPI: "1"
+
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
         env:
-          JULIA_NUM_THREADS: 4
+          JULIA_NUM_THREADS: 2
           CI_USE_MPI: "1"
         with:
           annotate: true

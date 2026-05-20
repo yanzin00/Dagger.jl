@@ -83,10 +83,6 @@ if PROGRAM_FILE != "" && realpath(PROGRAM_FILE) == @__FILE__
     catch
     end
 
-    if USE_MPI
-        include("setup_mpi.jl")
-    end
-
     using ArgParse
     s = ArgParseSettings(description = "Dagger Testsuite")
     @eval begin
@@ -212,6 +208,7 @@ if USE_GPU
 end
 
 if USE_MPI
+    include("setup_mpi.jl")
     @info "Running MPI tests via mpiexecjl"
     mpiexecjl_path = joinpath(DEPOT_PATH[1], "bin", "mpiexecjl")
     cmd = `$mpiexecjl_path -n 2 $(Base.julia_cmd()) --project=$(Base.active_project()) $(joinpath(@__DIR__, "mpi_test.jl"))`

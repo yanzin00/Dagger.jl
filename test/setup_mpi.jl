@@ -1,12 +1,10 @@
 if USE_MPI
-    using MPIPreferences 
-    # Configure to use JLL binary. This writes to the active Project.toml or LocalPreferences.toml.
-    MPIPreferences.use_jll_binary("MPICH_jll"; export_prefs=true)
-
-    # Load MPI to trigger precompilation on the master process
+    # We assume MPI is already configured via MPIPreferences (e.g., in CI workflow).
+    # Loading it here triggers precompilation if necessary.
     using MPI
 
-    # Install mpiexecjl wrapper
+    # Install the mpiexecjl wrapper to the depot's bin directory.
+    # This wrapper is used to launch Julia processes with the correct MPI environment.
     MPI.install_mpiexecjl(; destdir=joinpath(DEPOT_PATH[1], "bin"), force=true)
 end
 
